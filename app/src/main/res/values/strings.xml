@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">GasMobileClient</string>
+    <string-array name="activity_types">
+        <item>WALKING</item>
+        <item>RUNNING</item>
+        <item>SWIMMING</item>
+        <item>CYCLING</item>
+    </string-array>
+</resources>

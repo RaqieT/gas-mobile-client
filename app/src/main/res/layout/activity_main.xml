@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".MainActivity">
+
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Typ aktywności"
+            android:id="@+id/activity_type_title"
+            android:padding="20dp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
+    <Spinner
+            android:entries="@array/activity_types"
+            android:id="@+id/activity_type_input"
+            android:padding="20dp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/activity_type_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Czas"
+            android:id="@+id/time_text"
+            android:padding="20dp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/activity_type_input"/>
+
+    <EditText
+            android:padding="20dp"
+            android:id="@+id/time_input"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:inputType="time"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/time_text"/>
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Dystans"
+            android:id="@+id/distance_text"
+            android:padding="20dp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/time_input"/>
+
+    <EditText
+            android:padding="20dp"
+            android:id="@+id/distance_input"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:inputType="numberDecimal"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/distance_text"/>
+
+    <Button android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:onClick="addActivity"
+            android:text="Dodaj"
+            android:enabled="false"
+            android:id="@+id/add_activity"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/distance_input"
+    />
+
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Niezalogowany"
+            android:id="@+id/user_name"
+            android:padding="20dp"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+    <Button android:id="@+id/sign_in"
+            android:padding="20dp"
+
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            android:text="Zaloguj się"
+            android:onClick="signIn"
+            />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
