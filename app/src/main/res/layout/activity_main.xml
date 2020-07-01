@@ -26,7 +26,7 @@
     <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Czas"
+            android:text="Czas [hh:mm:ss]"
             android:id="@+id/time_text"
             android:padding="20dp"
             app:layout_constraintLeft_toLeftOf="parent"
@@ -43,30 +43,41 @@
     <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Dystans"
-            android:id="@+id/distance_text"
+            android:text="Średnia prędkość [m/s]"
+            android:id="@+id/velocity_text"
             android:padding="20dp"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintTop_toBottomOf="@id/time_input"/>
 
     <EditText
             android:padding="20dp"
-            android:id="@+id/distance_input"
+            android:id="@+id/velocity_input"
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
             android:inputType="numberDecimal"
             app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/distance_text"/>
+            app:layout_constraintTop_toBottomOf="@id/velocity_text"/>
 
-    <Button android:layout_width="match_parent"
+    <Button
+        android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:onClick="addActivity"
             android:text="Dodaj"
             android:enabled="false"
             android:id="@+id/add_activity"
             app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/distance_input"
+            app:layout_constraintTop_toBottomOf="@id/velocity_input"
     />
+
+    <ListView
+        android:id="@+id/console_log"
+
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/add_activity"
+        app:layout_constraintBottom_toTopOf="@id/user_name"
+        />
 
     <TextView
             android:layout_width="wrap_content"

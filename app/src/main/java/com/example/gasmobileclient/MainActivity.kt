@@ -1,12 +1,18 @@
 package com.example.gasmobileclient
 
+import ActivityStatusHandler
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.icu.text.SimpleDateFormat
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import com.example.gasmobileclient.detection.ActivityStatus
 import com.example.gasmobileclient.integration.api.ActivityRestService
 import com.example.gasmobileclient.integration.dto.ActivityDto
 import com.example.gasmobileclient.integration.dto.ActivityType
@@ -16,6 +22,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.tasks.Task
+import pl.politechnika.lodzka.mobile.applications.service.detection.BackgroundDetectedActivitiesService
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -30,10 +37,18 @@ class MainActivity : AppCompatActivity() {
     var RC_SIGN_IN: Int = 1
     var retrofit: Retrofit? = null
     var account: GoogleSignInAccount? = null
+    var adapter: ArrayAdapter<String>? = null
+    var activityRecognitionBroadcastReceiver: BroadcastReceiver? = null
+    var activityRecognitionBroadcastReceiverFilter = IntentFilter(DETECTED_ACTIVITY_ACTION)
+    var activityStatusHandler: ActivityStatusHandler = ActivityStatusHandler()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        val consoleLog = findViewById<ListView>(R.id.console_log)
+        adapter = SimpleAdapter(this, android.R.layout.simple_list_item_1, ArrayList())
+        consoleLog.adapter = adapter
         title = "Dodaj aktywność"
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestProfile()
@@ -43,9 +58,34 @@ class MainActivity : AppCompatActivity() {
         client = GoogleSignIn.getClient(this, gso)
 
         retrofit = Retrofit.Builder()
-                .baseUrl("http://192.168.8.11:8080")
+                .baseUrl("http://10.0.2.2:8080")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
+
+        activityRecognitionBroadcastReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent?) {
+                val activity = intent?.getSerializableExtra(DETECTED_ACTIVITY_INTENT) as ActivityStatus
+                adapter?.add("Transition: ${activity.type} (${activity.transition})")
+
+                if (activity.transition == "START") {
+                    activityStatusHandler.handleStart(activity.type)
+                } else {
+                    val handleExit = activityStatusHandler.handleExit(activity.type)
+                    if (handleExit == null) {
+                        return;
+                    }
+
+                    if (activity.type == "RUNNING") {
+                        sendActivity(3.05, handleExit, ActivityType.RUNNING.name)
+                    } else if (activity.type == "WALKING") {
+                        sendActivity(1.4, handleExit, ActivityType.WALKING.name)
+                    } else if (activity.type == "ON_BICYCLE") {
+                        sendActivity(4.91, handleExit, ActivityType.CYCLING.name)
+                    }
+                }
+            }
+        }
+
     }
 
     fun signIn(view: View) {
@@ -75,6 +115,7 @@ class MainActivity : AppCompatActivity() {
             loggedInTextView.invalidate()
             val addButton = findViewById<Button>(R.id.add_activity)
             addButton.isEnabled = true
+            startTrackingActivity()
 
         } catch (e: ApiException) {
             Log.e(TAG, e.message ?: "Empty")
@@ -96,12 +137,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun addActivity(view: View) {
-        val create = retrofit?.create(ActivityRestService::class.java)
         val activityType = findViewById<Spinner>(R.id.activity_type_input).selectedItem.toString()
-        val distance = findViewById<EditText>(R.id.distance_input).text.toString().toDouble()
+        val velocity = findViewById<EditText>(R.id.velocity_input).text.toString().toDouble()
         val timeText = findViewById<EditText>(R.id.time_input).text.toString()
 
-        val activity = ActivityDto(distance, parseTime(timeText), ActivityType.valueOf(activityType))
+        sendActivity(velocity, parseTime(timeText), activityType)
+    }
+
+    fun sendActivity(velocity : Double, time : Long, activityType : String) {
+        val create = retrofit?.create(ActivityRestService::class.java)
+
+        val activity = ActivityDto(velocity, time, ActivityType.valueOf(activityType))
 
         create?.save(account?.id ?: "", activity)?.enqueue(object : Callback<Void> {
             override fun onFailure(call: Call<Void>?, t: Throwable?) {
@@ -115,8 +161,42 @@ class MainActivity : AppCompatActivity() {
             }
 
         })
-
     }
 
+    private fun startTrackingActivity() {
+        if (shouldRequestActivityRecognitionPermission(this)) {
+            adapter?.add("Asking for ActivityRecognitionPermission")
+            requestActivityRecognitionPermission(this)
+            return
+        }
+        adapter?.add("ActivityRecognitionPermission granted")
+
+        val intent =
+            Intent(this, BackgroundDetectedActivitiesService::class.java)
+        adapter?.add("Activity recognition service started.")
+        startService(intent)
+    }
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        when (requestCode) {
+            ACTIVITY_RECOGNITION_RC -> if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                startTrackingActivity()
+            } else {
+                Toast.makeText(applicationContext, "$ACTIVITY_RECOGNITION_RC not granted", Toast.LENGTH_LONG).show()
+            }
+            else -> super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        registerReceiver(activityRecognitionBroadcastReceiver, activityRecognitionBroadcastReceiverFilter)
+        adapter?.add("Broadcasters registered.")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        unregisterReceiver(activityRecognitionBroadcastReceiver)
+        adapter?.add("Broadcasters unregistered.")
+    }
 
 }
